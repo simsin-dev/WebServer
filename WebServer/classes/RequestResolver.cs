@@ -9,6 +9,17 @@ namespace WebServer.classes
 {
     public abstract class RequestResolver
     {
+        public string serverPath;
+        public string message404Path;
+        public string message403Path;
+
+        public RequestResolver(string serverPath, string message404Path, string message403Path)
+        {
+            this.serverPath = serverPath;
+            this.message404Path = message404Path;
+            this.message403Path = message403Path;
+        }
+
         public abstract void HandleRequest(HttpListenerContext context, string serverPath);
 
         public bool GetResource(Stream output, string requestedResource, string serverPath)
