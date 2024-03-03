@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -20,9 +21,9 @@ namespace WebServer.classes
             this.message403Path = message403Path;
         }
 
-        public abstract void HandleRequest(HttpListenerContext context, string serverPath);
+        public abstract void HandleRequest(NetworkStream context, string resource);
 
-        public bool GetResource(Stream output, string requestedResource, string serverPath)
+        public bool GetResource(NetworkStream output, string requestedResource)
         {
             var res = requestedResource + getSuffix(requestedResource);
             res = res.Remove(0,1);

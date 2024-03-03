@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 namespace WebServer.classes
@@ -13,14 +14,18 @@ namespace WebServer.classes
             
         }
 
-        public override void HandleRequest(HttpListenerContext context, string serverPath)
+        public override void HandleRequest(NetworkStream stream, string requestedResource)
         {
-            context.Response.StatusCode = 200;
-            context.Response.ContentEncoding = Encoding.UTF8;
+            string httpResponse = $"HTTP/1.1 200 OK\r\n\r\n";
+            byte[] responseBytes = Encoding.UTF8.GetBytes(httpResponse);
 
-            GetResource(context.Response.OutputStream, context.Request.RawUrl, serverPath);
+            stream.Write(responseBytes, 0, responseBytes.Length);
+            GetResource(stream, requestedResource);
+            stream.FlushAsync();
+            stream.Close();
 
-            context.Response.Close();
+            //GetResource(context.Response.OutputStream, );
+
             throw new NotImplementedException();
         }
     }

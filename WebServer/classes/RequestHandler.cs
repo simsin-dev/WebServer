@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Net.Security;
+using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -14,7 +16,6 @@ namespace WebServer.classes
         public string message403Path;
 
         GETHandler GET;
-        BanHandler banHandler = new();
 
         public RequestHandler(string serverPath, string message404Path, string message403Path)
         {
@@ -25,15 +26,27 @@ namespace WebServer.classes
             GET = new GETHandler(serverPath, message404Path, message403Path);
         }
 
-        public async Task HandleRequest(HttpListenerContext context)
+        public async Task HandleRequest(SslStream stream)
         {
-            /*if (banHandler.Banned(context.Request.RemoteEndPoint.Address.ToString(), context.Request.UserAgent))
-            {
-                context.Response.Abort();
-                return;
-            }*/
+            StreamReader reader = new StreamReader(stream, Encoding.UTF8);
+            string httpRequest = await reader.ReadLineAsync();
 
-            GET.HandleRequest(context, "C:\\Users\\jacul\\Desktop\\simsin.dev");
+            Console.WriteLine(httpRequest);
+        }
+
+        public async Task HandleRequest(NetworkStream stream)
+        {
+            StreamReader reader = new StreamReader(stream, Encoding.UTF8);
+            string httpRequest = await reader.ReadLineAsync();
+
+            string[] request = httpRequest.Split(" ", StringSplitOptions.RemoveEmptyEntries);
+
+            if (request[0] == "GET")
+            {
+                GET.HandleRequest(stream, request[1]);
+            }
+
+            Console.WriteLine(httpRequest);
         }
     }
 }
