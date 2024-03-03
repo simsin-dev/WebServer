@@ -29,6 +29,8 @@ namespace WebServer.classes
         private void GenerateConfig()
         {
             configuration.Add("root-path", "");
+            configuration.Add("ip-to-listen-on", "");
+            configuration.Add("port", "80");
             configuration.Add("prefix", "");
             configuration.Add("certificate-path", "");
             configuration.Add("404-path", "");

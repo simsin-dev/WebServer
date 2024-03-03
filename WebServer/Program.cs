@@ -29,7 +29,7 @@ class Program
             certificate = new X509Certificate2(certPath, "meow");
         }
 
-        TcpListener listener = new TcpListener(IPAddress.Parse("127.0.0.1"), 5050);
+        TcpListener listener = new TcpListener(IPAddress.Parse(configObj.GetValue("ip-to-listen-on")), Convert.ToInt32(configObj.GetValue("port")));
         listener.Start();
 
         if(useCertificate)
