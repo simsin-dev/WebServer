@@ -29,8 +29,9 @@ namespace WebServer.classes
         public async Task HandleRequest(SslStream stream)
         {
             StreamReader reader = new StreamReader(stream, Encoding.UTF8);
-            string httpRequest = await reader.ReadLineAsync();
+            var httpRequest = reader.ReadLine();
 
+            Console.WriteLine("read:");
             Console.WriteLine(httpRequest);
         }
 

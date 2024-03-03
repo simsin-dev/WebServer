@@ -6,6 +6,7 @@ using System.Net.Sockets;
 using System.Globalization;
 using System.Net.Security;
 using System.Security.Authentication;
+using System.Text;
 
 class Program
 {
@@ -25,8 +26,7 @@ class Program
 
         if(useCertificate)
         {
-            certificate = new X509Certificate2(certPath);
-
+            certificate = new X509Certificate2(certPath, "meow");
         }
 
         TcpListener listener = new TcpListener(IPAddress.Parse("127.0.0.1"), 5050);
@@ -54,13 +54,14 @@ class Program
 
     private static void HttpsListen(TcpListener listener, X509Certificate2 certificate, RequestHandler handler)
     {
+
         while (true)
         {
             TcpClient client = listener.AcceptTcpClientAsync().GetAwaiter().GetResult(); //async later
 
-            using (SslStream sslStream = new SslStream(client.GetStream()))
+            using (SslStream sslStream = new SslStream(client.GetStream(), false))
             {
-                sslStream.AuthenticateAsServer(certificate, false, SslProtocols.Tls12, true);
+                sslStream.AuthenticateAsServer(certificate);
 
                 handler.HandleRequest(sslStream);
             }
