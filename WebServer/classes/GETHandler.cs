@@ -16,15 +16,28 @@ namespace WebServer.classes
 
         public override void HandleRequest(NetworkStream stream, string requestedResource)
         {
-            string httpResponse = $"HTTP/1.1 200 OK\r\n\r\n";
-            byte[] responseBytes = Encoding.UTF8.GetBytes(httpResponse);
-
-            stream.Write(responseBytes, 0, responseBytes.Length);
-            GetResource(stream, requestedResource);
             stream.FlushAsync();
-            stream.Close();
 
-            //GetResource(context.Response.OutputStream, );
+
+            var path = GetResourcePath(requestedResource);
+
+            if (File.Exists(path))
+            {
+                var headerBytes = Encoding.UTF8.GetBytes(header.GetHeader(200));
+                stream.Write(headerBytes);
+
+                GetResource(stream, path);
+            }
+            else
+            {
+                var headerBytes = Encoding.UTF8.GetBytes(header.GetHeader(404));
+                stream.Write(headerBytes);
+
+                GetResource(stream, message404Path);
+            }
+
+
+            stream.Close();
 
             throw new NotImplementedException();
         }

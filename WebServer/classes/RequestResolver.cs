@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Threading.Tasks;
+using WebServer.other;
 
 namespace WebServer.classes
 {
@@ -14,6 +13,7 @@ namespace WebServer.classes
         public string message404Path;
         public string message403Path;
 
+        public WebHttpResponseHeader header = new();
         public RequestResolver(string serverPath, string message404Path, string message403Path)
         {
             this.serverPath = serverPath;
@@ -23,36 +23,34 @@ namespace WebServer.classes
 
         public abstract void HandleRequest(NetworkStream context, string resource);
 
-        public bool GetResource(NetworkStream output, string requestedResource)
+        public void GetResource(NetworkStream output, string path)
         {
-            var res = requestedResource + getSuffix(requestedResource);
-            res = res.Remove(0,1);
-
-            var path = Path.Combine(serverPath,res);
-
-            Console.WriteLine(path);
-
-
-            if (!File.Exists(path))
+            using (output)
             {
-                return false;
-            }
-            else 
-            {
-                using (output)
+                using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read))
                 {
-                    using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read))
-                    {
-                        fs.CopyTo(output);
-                    }
+                    fs.CopyTo(output);
                 }
-
-
-                return true;
             }
         }
 
-        string getSuffix(string requested)
+        public string GetResourcePath(string resource)
+        {
+            if (resource.Contains(serverPath))
+            {
+                return resource;
+            }
+            else
+            {
+                var res = resource + GetSuffix(resource);
+                res = res.Remove(0, 1);
+
+                var path = Path.Combine(serverPath, res);
+                return path;
+            }
+        }
+
+        string GetSuffix(string requested)
         {
             if(requested.Contains('.'))
             {

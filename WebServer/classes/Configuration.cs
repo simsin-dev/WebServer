@@ -9,7 +9,7 @@ namespace WebServer.classes
 {
     public class Configuration
     {
-        List<ConfigOption> configurtion = new();
+        Dictionary<string,string> configuration = new();
 
         public void LoadConfig()
         {
@@ -17,7 +17,7 @@ namespace WebServer.classes
             {
                 string config = File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), "configuration.json"));
 
-                configurtion = JsonConvert.DeserializeObject<List<ConfigOption>>(config);
+                configuration = JsonConvert.DeserializeObject<Dictionary<string, string>>(config);
 
             }
             catch (FileNotFoundException e)
@@ -28,40 +28,20 @@ namespace WebServer.classes
 
         private void GenerateConfig()
         {
-            configurtion.Add(new ConfigOption("root-path",""));
-            configurtion.Add(new ConfigOption("prefix", ""));
-            configurtion.Add(new ConfigOption("certificate-path", ""));
-            configurtion.Add(new ConfigOption("404-path", ""));
-            configurtion.Add(new ConfigOption("403-path", ""));
+            configuration.Add("root-path", "");
+            configuration.Add("prefix", "");
+            configuration.Add("certificate-path", "");
+            configuration.Add("404-path", "");
+            configuration.Add("403-path", "");
 
-            string config = JsonConvert.SerializeObject(configurtion);
+            string config = JsonConvert.SerializeObject(configuration);
 
             File.WriteAllText(Path.Combine(Directory.GetCurrentDirectory(), "configuration.json"), config);
         }
 
         public string? GetValue(string name)
         {
-            foreach (ConfigOption option in configurtion) 
-            {
-                if(option.name == name)
-                {
-                    return option.value;
-                }
-            }
-
-            return null;
-        }
-
-        public class ConfigOption
-        {
-            public string name;
-            public string value;
-
-            public ConfigOption(string name, string value)
-            {
-                this.name = name;
-                this.value = value;
-            }
+            return configuration[name];
         }
     }
 }
