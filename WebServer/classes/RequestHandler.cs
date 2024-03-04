@@ -96,7 +96,7 @@ namespace WebServer.classes
             }
             catch (Exception e) 
             {
-                Console.WriteLine("Processing request failed: " + e.Message);
+                Console.WriteLine("Processing request failed: " + e.ToString());
             }
         }
 
