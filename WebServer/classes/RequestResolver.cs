@@ -24,14 +24,11 @@ namespace WebServer.classes
         public async Task HandleRequest(Stream context, string resource)
         {}
 
-        public async Task GetResource(Stream output, string path)
+        public async Task GetResource(Stream output, string path, int debug)
         {
-            using (output)
+            using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read))
             {
-                using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read))
-                {
-                    await fs.CopyToAsync(output).ConfigureAwait(false);
-                }
+                await fs.CopyToAsync(output).ConfigureAwait(false);
             }
         }
 

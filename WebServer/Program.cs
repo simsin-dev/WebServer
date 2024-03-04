@@ -17,7 +17,7 @@ class Program
 
         Console.WriteLine("Starting server!!");
 
-        RequestHandler handler = new(configObj.GetValue("root-path"), configObj.GetValue("404-path"), configObj.GetValue("403-path"));
+        RequestHandler handler = new(configObj);
 
         X509Certificate2 certificate = null;
 
@@ -44,27 +44,38 @@ class Program
 
     private static async Task HttpListen(TcpListener listener, RequestHandler handler)
     {
+        int debug = 0;
         while (true)
         {
-            TcpClient client = await listener.AcceptTcpClientAsync(); //async later
+            TcpClient client = await listener.AcceptTcpClientAsync().ConfigureAwait(false); //async later
 
-            handler.HandleRequest(client.GetStream(), client);
+            handler.HandleRequest(client.GetStream(), client,debug);
+
+            debug++;
         }
     }
 
     private static async Task HttpsListen(TcpListener listener, X509Certificate2 certificate, RequestHandler handler)
     {
-
+        int debug = 0;
         while (true)
         {
-            TcpClient client = await listener.AcceptTcpClientAsync(); //async later
-
-            using (SslStream sslStream = new SslStream(client.GetStream(), false))
+            try
             {
-                await sslStream.AuthenticateAsServerAsync(certificate,false, SslProtocols.Tls13 ,true);
+                TcpClient client = await listener.AcceptTcpClientAsync().ConfigureAwait(false); //async later
 
+                SslStream sslStream = new SslStream(client.GetStream(), false);
 
-                handler.HandleRequest(sslStream, client);
+                await sslStream.AuthenticateAsServerAsync(certificate, false, false).ConfigureAwait(false);
+                Console.WriteLine(debug + " passed auth, sending to the handler");
+
+                handler.HandleRequest(sslStream, client, debug);
+
+                debug++;
+            }
+            catch (Exception ex) 
+            {
+                Console.WriteLine(ex.ToString());
             }
         }
     }
