@@ -14,11 +14,8 @@ namespace WebServer.classes
             
         }
 
-        public override void HandleRequest(NetworkStream stream, string requestedResource)
+        public async Task HandleRequest(Stream stream, string requestedResource)
         {
-            stream.FlushAsync();
-
-
             var path = GetResourcePath(requestedResource);
 
             if (File.Exists(path))
@@ -26,20 +23,16 @@ namespace WebServer.classes
                 var headerBytes = Encoding.UTF8.GetBytes(header.GetHeader(200));
                 stream.Write(headerBytes);
 
-                GetResource(stream, path);
+
+                await GetResource(stream, path);
             }
             else
             {
                 var headerBytes = Encoding.UTF8.GetBytes(header.GetHeader(404));
                 stream.Write(headerBytes);
 
-                GetResource(stream, message404Path);
+                await GetResource(stream, message404Path);
             }
-
-
-            stream.Close();
-
-            throw new NotImplementedException();
         }
     }
 }

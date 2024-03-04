@@ -29,10 +29,10 @@ namespace WebServer.classes
         private void GenerateConfig()
         {
             configuration.Add("root-path", "");
-            configuration.Add("ip-to-listen-on", "");
+            configuration.Add("ip-to-listen-on", "127.0.0.1");
             configuration.Add("port", "80");
-            configuration.Add("prefix", "");
             configuration.Add("certificate-path", "");
+            configuration.Add("certificate-passphrase", "");
             configuration.Add("404-path", "");
             configuration.Add("403-path", "");
 

@@ -10,7 +10,7 @@ using System.Text;
 
 class Program
 {
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         Configuration configObj = new();
         configObj.LoadConfig();
@@ -26,7 +26,7 @@ class Program
 
         if(useCertificate)
         {
-            certificate = new X509Certificate2(certPath, "meow");
+            certificate = new X509Certificate2(certPath, configObj.GetValue("certificate-passphrase"));
         }
 
         TcpListener listener = new TcpListener(IPAddress.Parse(configObj.GetValue("ip-to-listen-on")), Convert.ToInt32(configObj.GetValue("port")));
@@ -34,36 +34,37 @@ class Program
 
         if(useCertificate)
         {
-            HttpsListen(listener, certificate, handler);
+            await HttpsListen(listener, certificate, handler);
         }
         else
         {
-            HttpListen(listener, handler);
+            await HttpListen(listener, handler);
         }
     }
 
-    private static void HttpListen(TcpListener listener, RequestHandler handler)
+    private static async Task HttpListen(TcpListener listener, RequestHandler handler)
     {
         while (true)
         {
-            TcpClient client = listener.AcceptTcpClientAsync().GetAwaiter().GetResult(); //async later
+            TcpClient client = await listener.AcceptTcpClientAsync(); //async later
 
-            handler.HandleRequest(client.GetStream());
+            handler.HandleRequest(client.GetStream(), client);
         }
     }
 
-    private static void HttpsListen(TcpListener listener, X509Certificate2 certificate, RequestHandler handler)
+    private static async Task HttpsListen(TcpListener listener, X509Certificate2 certificate, RequestHandler handler)
     {
 
         while (true)
         {
-            TcpClient client = listener.AcceptTcpClientAsync().GetAwaiter().GetResult(); //async later
+            TcpClient client = await listener.AcceptTcpClientAsync(); //async later
 
             using (SslStream sslStream = new SslStream(client.GetStream(), false))
             {
-                sslStream.AuthenticateAsServer(certificate);
+                await sslStream.AuthenticateAsServerAsync(certificate,false, SslProtocols.Tls13 ,true);
 
-                handler.HandleRequest(sslStream);
+
+                handler.HandleRequest(sslStream, client);
             }
         }
     }

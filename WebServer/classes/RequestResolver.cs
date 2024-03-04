@@ -21,15 +21,16 @@ namespace WebServer.classes
             this.message403Path = message403Path;
         }
 
-        public abstract void HandleRequest(NetworkStream context, string resource);
+        public async Task HandleRequest(Stream context, string resource)
+        {}
 
-        public void GetResource(NetworkStream output, string path)
+        public async Task GetResource(Stream output, string path)
         {
             using (output)
             {
                 using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read))
                 {
-                    fs.CopyTo(output);
+                    await fs.CopyToAsync(output).ConfigureAwait(false);
                 }
             }
         }

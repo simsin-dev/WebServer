@@ -26,28 +26,25 @@ namespace WebServer.classes
             GET = new GETHandler(serverPath, message404Path, message403Path);
         }
 
-        public async Task HandleRequest(SslStream stream)
+        public async Task HandleRequest(Stream stream, TcpClient client)
         {
-            StreamReader reader = new StreamReader(stream, Encoding.UTF8);
-            var httpRequest = reader.ReadLine();
+            DateTime start = DateTime.Now;
 
-            Console.WriteLine("read:");
-            Console.WriteLine(httpRequest);
-        }
-
-        public async Task HandleRequest(NetworkStream stream)
-        {
             StreamReader reader = new StreamReader(stream, Encoding.UTF8);
-            string httpRequest = await reader.ReadLineAsync();
+            string httpRequest = reader.ReadLine();
 
             string[] request = httpRequest.Split(" ", StringSplitOptions.RemoveEmptyEntries);
 
             if (request[0] == "GET")
             {
-                GET.HandleRequest(stream, request[1]);
+                await GET.HandleRequest(stream, request[1]);
             }
 
-            Console.WriteLine(httpRequest);
+            stream.Close();
+
+            client.Close();
+
+            Console.WriteLine($"Handling took: {DateTime.Now - start} For request: {httpRequest}");
         }
     }
 }
