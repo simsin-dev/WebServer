@@ -24,7 +24,7 @@ namespace WebServer.classes
         public async Task HandleRequest(Stream context, string resource)
         {}
 
-        public async Task GetResource(Stream output, string path, int debug)
+        public async Task GetResource(Stream output, string path)
         {
             using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read))
             {

@@ -14,7 +14,7 @@ namespace WebServer.classes
             
         }
 
-        public async Task HandleRequest(Stream stream, string requestedResource, int debug)
+        public async Task HandleRequest(Stream stream, string requestedResource)
         {
             var path = GetResourcePath(requestedResource);
 
@@ -23,14 +23,14 @@ namespace WebServer.classes
                 var headerBytes = Encoding.UTF8.GetBytes(header.GetHeader(200));
                 await stream.WriteAsync(headerBytes);
 
-                await GetResource(stream, path, debug);
+                await GetResource(stream, path);
             }
             else
             {
                 var headerBytes = Encoding.UTF8.GetBytes(header.GetHeader(404));
                 await stream.WriteAsync(headerBytes);
 
-                await GetResource(stream, message404Path, debug);
+                await GetResource(stream, message404Path);
             }
         }
     }
