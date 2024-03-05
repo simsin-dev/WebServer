@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO.Compression;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using WebServer.other;
+using WebServer.http;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace WebServer.classes
 {
@@ -13,7 +15,7 @@ namespace WebServer.classes
         public string message404Path;
         public string message403Path;
 
-        public WebHttpResponseHeader header = new();
+        public HttpResponseHeaderComposer header = new();
         public RequestResolver(string serverPath, string message404Path, string message403Path)
         {
             this.serverPath = serverPath;
@@ -28,8 +30,75 @@ namespace WebServer.classes
         {
             using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read))
             {
-                await fs.CopyToAsync(output).ConfigureAwait(false);
+                using (GZipStream gzip = new GZipStream(output, CompressionLevel.Optimal))
+                {
+                    await fs.CopyToAsync(gzip).ConfigureAwait(false);
+                }
             }
+        }
+
+        public string GetResourceType(string path) 
+        {
+            string rtype = path.Split('.').Last();
+
+            switch(rtype) 
+            {
+                case "html":
+                    return "text/html";
+
+                case "css":
+                    return "text/css";
+
+                case "js":
+                    return "text/javascript";
+
+                case "png":
+                    return "image/png";
+
+                case "jpg":
+                case "jpeg":
+                    return "image/jpeg";
+
+                case "mpeg":
+                case "mpg":
+                    return "video/mpeg";
+
+                case "mp4":
+                    return "video/mp4";
+
+                case "webm":
+                    return "video/webm";
+
+                case "ogv":
+                    return "video/ogg";
+
+                case "gif":
+                    return "image/gif";
+
+                case "mp3":
+                case "mpga":
+                case "mpeg3":
+                    return "audio/mpeg";
+
+                case "ogg":
+                    return "audio/ogg";
+
+                case "json":
+                    return "application/json";
+
+                case "zip":
+                    return "application/zip";
+
+                case "pdf":
+                    return "application/pdf";
+
+                case "ico":
+                    return "image/x-icon";
+
+                default:
+                    return "text/plain";
+            }
+
         }
 
         public string GetResourcePath(string resource)

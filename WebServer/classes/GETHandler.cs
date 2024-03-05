@@ -17,20 +17,24 @@ namespace WebServer.classes
         public async Task HandleRequest(Stream stream, string requestedResource)
         {
             var path = GetResourcePath(requestedResource);
+            var contentType = GetResourceType(path);
 
             if (File.Exists(path))
             {
-                var headerBytes = Encoding.UTF8.GetBytes(header.GetHeader(200));
+                var headerBytes = Encoding.UTF8.GetBytes(header.GetHeader(200, contentType, "gzip"));
                 await stream.WriteAsync(headerBytes);
 
                 await GetResource(stream, path);
             }
             else
             {
-                var headerBytes = Encoding.UTF8.GetBytes(header.GetHeader(404));
+                var headerBytes = Encoding.UTF8.GetBytes(header.GetHeader(404, contentType, "gzip"));
                 await stream.WriteAsync(headerBytes);
 
-                await GetResource(stream, message404Path);
+                if(contentType == "text/html")
+                {
+                    await GetResource(stream, message404Path);
+                }
             }
         }
     }

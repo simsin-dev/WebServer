@@ -9,6 +9,7 @@ using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
+using WebServer.http;
 
 namespace WebServer.classes
 {
@@ -61,38 +62,34 @@ namespace WebServer.classes
                 if (!authSucces)
                 {
                     EndAllComunication(stream, client);
+                    return;
                 }
             }
 
             try
             {
-                StreamReader reader = new StreamReader(stream, Encoding.UTF8);
-                bool readRequest = true;
+                HttpRequest request = new();
 
-
-                // later change for detecting cookies and etc...
-                string httpRequest = "";
-                while (readRequest)
+                bool goodRequest = await request.ReadHttpRequest(stream);
+                if(!goodRequest)
                 {
-                    var read = reader.ReadLine();
-                    httpRequest += read + "\n";
-
-                    if (read.Contains("Accept:"))
-                    {
-                        readRequest = false;
-                    }
+                    EndAllComunication(stream,client);
+                    return;
                 }
 
-
-                string[] request = httpRequest.Split(" ", StringSplitOptions.RemoveEmptyEntries);
-                if (request[0] == "GET")
+                switch(request.Method)
                 {
-                    await GET.HandleRequest(stream, request[1]);
+                    case HttpRequest.RequestMethod.GET:
+                        await GET.HandleRequest(stream, request.RequestedResource);
+                        break;
+
+                    case HttpRequest.RequestMethod.POST:
+                        throw new NotImplementedException();
                 }
 
                 EndAllComunication(stream, client);
 
-                Console.WriteLine($"Handling took: {DateTime.Now - startHandle} For request: {request[1]}");
+                Console.WriteLine($"Handling took: {DateTime.Now - startHandle} For request: {request.RequestedResource}");
             }
             catch (Exception e) 
             {
