@@ -12,8 +12,15 @@ namespace WebServer.http
         public RequestMethod Method { get; private set; }
 
         public string RequestedResource { get; private set; }
+        public string RequestedResourcePath { get; private set;}
 
         public Dictionary<string, string> RequestCookies { get; private set; }
+
+        public string referer { get ; private set; }
+
+        public int contentLength { get ; private set; }
+
+        public string body { get; private set; }
 
 
         public async Task<bool> ReadHttpRequest(Stream stream)
@@ -46,28 +53,46 @@ namespace WebServer.http
                 {
                     if (line.Contains("Cookie:"))
                     {
-                        string cookieList = line.Replace("Cookie:", "");
+                        string cookieList = line.Replace("Cookie: ", "");
 
                         string[] cookies = cookieList.Split("; ");
 
                         foreach (string cookie in cookies)
                         {
-                            string[] keValPair = cookie.Split(':');
+                            string[] keValPair = cookie.Split('=');
+
+                            RequestCookies = new();
 
                             RequestCookies.Add(keValPair[0], keValPair[1]);
                         }
                     }
+
+                    if (line.Contains("Referer: "))
+                    {
+                        referer = line.Replace("Referer: ", "");
+                    }
+
+                    if(line.Contains("Content-Length: "))
+                    {
+                        contentLength = Convert.ToInt32(line.Replace("Content-Length: ", ""));
+                    }
+                }
+
+                if (contentLength > 0)
+                {
+                    char[] buffer = new char[contentLength];
+                    reader.Read(buffer, 0, contentLength);
+                    body = new string(buffer);
                 }
 
                 return true;
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                Console.WriteLine(ex.ToString());
                 return false;
             }
         }
-
 
         public enum RequestMethod
         {

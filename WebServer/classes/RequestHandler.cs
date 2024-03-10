@@ -25,17 +25,20 @@ namespace WebServer.classes
 
         Configuration config;
 
+        passwdManager passwdManager = new();
+        CookieManager cookieManager = new();
+        HttpResponseHeaderComposer headerComposer = new();
+
 
         GETHandler GET;
+        POSTHandler POST;
 
         public RequestHandler(Configuration config)
         {
             this.config = config;
-            this.serverPath = config.GetValue("root-path");
-            this.message404Path = config.GetValue("404-path");
-            this.message403Path = config.GetValue("403-path");
 
-            GET = new GETHandler(serverPath, message404Path, message403Path);
+            GET = new GETHandler(config,cookieManager,headerComposer);
+            POST = new POSTHandler(headerComposer,cookieManager,passwdManager,config);
 
             ssl = !string.IsNullOrEmpty(config.GetValue("certificate-path"));
 
@@ -77,14 +80,17 @@ namespace WebServer.classes
                     return;
                 }
 
+                Console.WriteLine(request.referer);
+
                 switch(request.Method)
                 {
                     case HttpRequest.RequestMethod.GET:
-                        await GET.HandleRequest(stream, request.RequestedResource);
+                        await GET.HandleRequest(stream, request);
                         break;
 
                     case HttpRequest.RequestMethod.POST:
-                        throw new NotImplementedException();
+                        await POST.HandleRequest(stream, request);
+                        break;
                 }
 
                 EndAllComunication(stream, client);

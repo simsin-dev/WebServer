@@ -1,23 +1,42 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
+using WebServer.http;
 namespace WebServer.classes
 {
-    public class GETHandler : RequestResolver
+    public class GETHandler
     {
-        public GETHandler(string serverPath, string message404Path, string message403Path) : base(serverPath, message404Path, message403Path)
+        Configuration config;
+        CookieManager cookies;
+        HttpResponseHeaderComposer header;
+
+        public GETHandler(Configuration config, CookieManager cookies, HttpResponseHeaderComposer headerComposer)
         {
-            
+            this.config = config;
+            this.cookies = cookies;
+            this.header = headerComposer;
         }
 
-        public async Task HandleRequest(Stream stream, string requestedResource)
+        public async Task HandleRequest(Stream stream, HttpRequest request)
         {
-            var path = GetResourcePath(requestedResource);
+            var path = GetResourcePath(request.RequestedResource);
             var contentType = GetResourceType(path);
+
+
+            if(!cookies.ConfirmAccess(path, request)) 
+            {
+                var headerBytes = Encoding.UTF8.GetBytes(header.GetHeader(200, contentType, "gzip"));
+                await stream.WriteAsync(headerBytes);
+
+                await GetResource(stream, config.GetValue("401-path"));
+
+                return;
+            }
 
             if (File.Exists(path))
             {
@@ -33,8 +52,116 @@ namespace WebServer.classes
 
                 if(contentType == "text/html")
                 {
-                    await GetResource(stream, message404Path);
+                    await GetResource(stream, config.GetValue("404-path"));
                 }
+            }
+        }
+
+
+        public async Task GetResource(Stream output, string path)
+        {
+            using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read))
+            {
+                using (GZipStream gzip = new GZipStream(output, CompressionLevel.Optimal))
+                {
+                    await fs.CopyToAsync(gzip).ConfigureAwait(false);
+                }
+            }
+        }
+
+        public string GetResourceType(string path)
+        {
+            string rtype = path.Split('.').Last();
+
+            switch (rtype)
+            {
+                case "html":
+                    return "text/html";
+
+                case "css":
+                    return "text/css";
+
+                case "js":
+                    return "text/javascript";
+
+                case "png":
+                    return "image/png";
+
+                case "jpg":
+                case "jpeg":
+                    return "image/jpeg";
+
+                case "mpeg":
+                case "mpg":
+                    return "video/mpeg";
+
+                case "mp4":
+                    return "video/mp4";
+
+                case "webm":
+                    return "video/webm";
+
+                case "ogv":
+                    return "video/ogg";
+
+                case "gif":
+                    return "image/gif";
+
+                case "mp3":
+                case "mpga":
+                case "mpeg3":
+                    return "audio/mpeg";
+
+                case "ogg":
+                    return "audio/ogg";
+
+                case "json":
+                    return "application/json";
+
+                case "zip":
+                    return "application/zip";
+
+                case "pdf":
+                    return "application/pdf";
+
+                case "ico":
+                    return "image/x-icon";
+
+                default:
+                    return "text/plain";
+            }
+
+        }
+
+        public string GetResourcePath(string resource)
+        {
+            if (resource.Contains(config.GetValue("root-path")))
+            {
+                return resource;
+            }
+            else
+            {
+                var res = resource + GetSuffix(resource);
+                res = res.Remove(0, 1);
+
+                var path = Path.Combine(config.GetValue("root-path"), res);
+                return path;
+            }
+        }
+
+        string GetSuffix(string requested)
+        {
+            if (requested.EndsWith('/'))
+            {
+                return "index.html";
+            }
+            else if (requested.Split('.').Last().ToArray().Length < 5)
+            {
+                return "";
+            }
+            else
+            {
+                return "/index.html";
             }
         }
     }

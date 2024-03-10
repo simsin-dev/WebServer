@@ -34,7 +34,11 @@ namespace WebServer.classes
             configuration.Add("certificate-path", "");
             configuration.Add("certificate-passphrase", "");
             configuration.Add("404-path", "");
-            configuration.Add("403-path", "");
+            configuration.Add("401-path", "");
+            configuration.Add("git-repo-dir", "");
+            configuration.Add("git-username","");
+            configuration.Add("git-passwd","");
+            configuration.Add("git-mail", "");
 
             string config = JsonConvert.SerializeObject(configuration);
 
