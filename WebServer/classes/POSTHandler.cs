@@ -54,9 +54,10 @@ namespace WebServer.classes
                 Random rand = new();
 
                 var name = "ADMINSESSION";
-                var value = rand.Next() + "PASS" + rand.Next();
+                var value = rand.Next() + ""; //also temporary
 
                 cookieMan.AddCookie(name,value, 2); // error
+                Console.WriteLine("cookie added");
 
                 string redirect = request.referer;
                 if(!request.referer.EndsWith('/'))
@@ -66,9 +67,10 @@ namespace WebServer.classes
 
                 redirect += "success.html";
 
-                var headerBytes = Encoding.UTF8.GetBytes(header.GetHeader(303, "text/plain", "gzip", $"{name}={value}", redirect)); //temporary solution
+                var headerBytes = Encoding.UTF8.GetBytes(header.GetHeader(303, "text/plain", "gzip", $"{name}={value}")); //temporary solution
 
                 await stream.WriteAsync(headerBytes);
+                Console.WriteLine(header.GetHeader(303, "text/plain", "gzip", $"{name}={value}", redirect));
             }
             else 
             {

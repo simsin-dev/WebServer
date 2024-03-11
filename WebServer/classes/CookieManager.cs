@@ -88,7 +88,7 @@ namespace WebServer.classes
         {
             foreach (var protRes in protectedResources)
             {
-                if (resource.Replace('/','\\').Contains(protRes.Key))
+                if (resource.Replace('\\', '/').Contains(protRes.Key.Replace('\\', '/'))) //replace bc windows has problem with slashes not being the way it wants
                 {
                     return true;
                 }
