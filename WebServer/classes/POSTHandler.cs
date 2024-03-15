@@ -82,26 +82,9 @@ namespace WebServer.classes
 
         private void RunGitPull()
         {
-            try
+            using(var git = new GitHandler(config))
             {
-                using (var repo = new Repository(config.GetValue("git-repo-dir")))
-                {
-                    PullOptions options = new PullOptions();
-                    options.FetchOptions = new FetchOptions();
-                    options.FetchOptions.CredentialsProvider = (url, usernameFromUrl, types) =>
-                        new UsernamePasswordCredentials
-                        {
-                            Username = config.GetValue("git-username"),
-                            Password = config.GetValue("git-passwd")
-                        };
-
-                    Commands.Pull(repo, new Signature(config.GetValue("git-username"), config.GetValue("git-mail"), DateTimeOffset.Now), options);
-                    Console.WriteLine("Pull successful.");
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Error: " + ex.Message);
+                git.RunGitPull();
             }
         }
 
