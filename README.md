@@ -1,4 +1,4 @@
-My http server made in .NET
+My http server for simsin.dev made in .NET
 
 !!!This project is designed for my specific usecase!!!
 
