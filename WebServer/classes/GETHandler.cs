@@ -11,14 +11,10 @@ namespace WebServer.classes
 {
     public class GETHandler
     {
-        Configuration config;
-        CookieManager cookies;
         HttpResponseHeaderComposer header;
 
-        public GETHandler(Configuration config, CookieManager cookies, HttpResponseHeaderComposer headerComposer)
+        public GETHandler( HttpResponseHeaderComposer headerComposer)
         {
-            this.config = config;
-            this.cookies = cookies;
             this.header = headerComposer;
         }
 
@@ -28,12 +24,12 @@ namespace WebServer.classes
             var contentType = GetResourceType(path);
 
 
-            if(!cookies.ConfirmAccess(path, request)) 
+            if(!Config.ConfirmAccess(path, request)) 
             {
                 var headerBytes = Encoding.UTF8.GetBytes(header.GetHeader(200, contentType, "gzip"));
                 await stream.WriteAsync(headerBytes);
 
-                await GetResource(stream, config.GetValue("401-path"));
+                await GetResource(stream, Config.GetErrorPath(401));
 
                 return;
             }
@@ -52,7 +48,7 @@ namespace WebServer.classes
 
                 if(contentType == "text/html")
                 {
-                    await GetResource(stream, config.GetValue("404-path"));
+                    await GetResource(stream, Config.GetErrorPath(404));
                 }
             }
         }
@@ -135,7 +131,7 @@ namespace WebServer.classes
 
         public string GetResourcePath(string resource)
         {
-            if (resource.Contains(config.GetValue("root-path")))
+            if (resource.Contains(Config.GetConfigValue("root-path")))
             {
                 return resource;
             }
@@ -144,7 +140,7 @@ namespace WebServer.classes
                 var res = resource + GetSuffix(resource);
                 res = res.Remove(0, 1);
 
-                var path = Path.Combine(config.GetValue("root-path"), res);
+                var path = Path.Combine(Config.GetConfigValue("root-path"), res);
                 return path;
             }
         }

@@ -18,20 +18,15 @@ namespace WebServer.classes
     public class POSTHandler
     {
         HttpResponseHeaderComposer header;
-        CookieManager cookieMan;
-        passwdManager passwdMan;
-        Configuration config;
 
-        public POSTHandler(HttpResponseHeaderComposer header, CookieManager cookieMan, passwdManager passwdMan, Configuration config)
+        public POSTHandler(HttpResponseHeaderComposer header)
         {
             this.header = header;
-            this.cookieMan = cookieMan;
-            this.passwdMan = passwdMan;
-            this.config = config;
         }
 
         //on my server POST method is only used for login page
         //for more functionality switch request.referer
+        [Obsolete]
         public async Task HandleRequest(Stream stream, HttpRequest request)
         {
             Console.WriteLine(request.body);
@@ -40,24 +35,26 @@ namespace WebServer.classes
 
             if(request.body.Contains("run-git-pls"))
             {
-                if (cookieMan.IsCookieValid("ADMINSESSION", request.RequestCookies["ADMINSESSION"]))
+                if (Config.IsCookieValid(new Cookie("ADMINSESSION", request.RequestCookies["ADMINSESSION"])))
                 {
-                    RunGitPull();
+                    GitHandler.RunGitPull();
                 }
 
                 return;
             }
 
-            bool valid = passwdMan.AreCredentialsValid(form["username"], form["passwd"]);
+            bool valid = Config.AreCredentialsValid(form["username"], form["passwd"], out var cook); //passwdMan.AreCredentialsValid(form["username"], form["passwd"]);
+            Cookie cookie = cook.Value;
+
             if (valid) 
             {
                 Random rand = new();
 
-                var name = "ADMINSESSION";
-                var value = rand.Next() + ""; //also temporary
+                //var name = "ADMINSESSION";
+                //var value = rand.Next() + ""; //also temporary
 
-                cookieMan.AddCookie(name,value, 2); // error
-                Console.WriteLine("cookie added");
+                //.AddCookie(name,value, 2); // error
+                //Console.WriteLine("cookie added");
 
                 string redirect = request.referer;
                 if(!request.referer.EndsWith('/'))
@@ -67,24 +64,16 @@ namespace WebServer.classes
 
                 redirect += "success.html";
 
-                var headerBytes = Encoding.UTF8.GetBytes(header.GetHeader(303, "text/plain", "gzip", $"{name}={value}")); //temporary solution
+                var headerBytes = Encoding.UTF8.GetBytes(header.GetHeader(303, "text/plain", "gzip", $"{cookie.Name}={cookie.Value}")); //temporary solution
 
                 await stream.WriteAsync(headerBytes);
-                Console.WriteLine(header.GetHeader(303, "text/plain", "gzip", $"{name}={value}", redirect));
+                Console.WriteLine(header.GetHeader(303, "text/plain", "gzip", $"{cookie.Name}={cookie.Value}", redirect));
             }
             else 
             {
                 Console.WriteLine("bad credentials");
                 var headerBytes = Encoding.UTF8.GetBytes(header.GetHeader(401, "text/plain", "gzip"));
                 await stream.WriteAsync(headerBytes);
-            }
-        }
-
-        private void RunGitPull()
-        {
-            using(var git = new GitHandler(config))
-            {
-                git.RunGitPull();
             }
         }
 

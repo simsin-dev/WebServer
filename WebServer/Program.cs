@@ -13,16 +13,15 @@ class Program
 {
     public static async Task Main(string[] args)
     {
-        Configuration configObj = new();
-        configObj.LoadConfig();
-
         Console.WriteLine("Starting server!!");
 
-        RequestHandler handler = new(configObj);
+        RequestHandler handler = new();
+        await handler.Initialize();
 
-        TcpListener listener = new TcpListener(IPAddress.Parse(configObj.GetValue("ip-to-listen-on")), Convert.ToInt32(configObj.GetValue("port")));
+        TcpListener listener = new TcpListener(IPAddress.Parse(Config.GetConfigValue("ip-to-listen-on")), Convert.ToInt32(Config.GetConfigValue("port")));
         listener.Start();
 
+        Console.WriteLine("Listening...");
         await HttpListen(listener, handler);
     }
 
@@ -31,6 +30,7 @@ class Program
         while (true)
         {
             TcpClient client = await listener.AcceptTcpClientAsync().ConfigureAwait(false); //async later
+            Console.WriteLine(client.Client.RemoteEndPoint.ToString());
 
             handler.HandleRequest(client);
         }

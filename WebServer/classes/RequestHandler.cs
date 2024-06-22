@@ -22,29 +22,27 @@ namespace WebServer.classes
         bool ssl;
 
         X509Certificate2 certificate;
-
-        Configuration config;
-
-        passwdManager passwdManager = new();
-        CookieManager cookieManager = new();
         HttpResponseHeaderComposer headerComposer = new();
 
 
         GETHandler GET;
         POSTHandler POST;
 
-        public RequestHandler(Configuration config)
+        public RequestHandler()
         {
-            this.config = config;
+            GET = new GETHandler(headerComposer);
+            POST = new POSTHandler(headerComposer);
+        }
 
-            GET = new GETHandler(config,cookieManager,headerComposer);
-            POST = new POSTHandler(headerComposer,cookieManager,passwdManager,config);
+        public async Task Initialize()
+        {
+            ssl = Convert.ToBoolean(Config.GetConfigValue("ssl"));
 
-            ssl = !string.IsNullOrEmpty(config.GetValue("certificate-path"));
-
-            if(ssl)
+            if (ssl)
             {
-                certificate = new X509Certificate2(config.GetValue("certificate-path"), config.GetValue("certificate-passphrase"));
+                AcmeCert certGetter = new();
+
+                certificate = await certGetter.GetCert(Config.GetConfigValue("domain"), Config.GetGitConfigValue("certificate-passphrase"), Config.certificateExpirationDate);
             }
         }
 

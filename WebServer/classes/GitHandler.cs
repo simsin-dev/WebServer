@@ -7,36 +7,24 @@ using System.Threading.Tasks;
 
 namespace WebServer.classes
 {
-    public class GitHandler : IDisposable
+    public static class GitHandler
     {
-        Configuration config;
-
-        public GitHandler(Configuration config)
-        {
-            this.config = config;
-        }
-
-        public void Dispose()
-        {
-            GC.SuppressFinalize(this);
-        }
-
-        public void RunGitPull()
+        public static void RunGitPull()
         {
             try
             {
-                using (var repo = new Repository(config.GetValue("git-repo-dir")))
+                using (var repo = new Repository(Config.GetGitConfigValue("git-repo-dir")))
                 {
                     PullOptions options = new PullOptions();
                     options.FetchOptions = new FetchOptions();
                     options.FetchOptions.CredentialsProvider = (url, usernameFromUrl, types) =>
                         new UsernamePasswordCredentials
                         {
-                            Username = config.GetValue("git-username"),
-                            Password = config.GetValue("git-passwd")
+                            Username = Config.GetGitConfigValue("git-username"),
+                            Password = Config.GetGitConfigValue("git-passwd")
                         };
 
-                    Commands.Pull(repo, new Signature(config.GetValue("git-username"), config.GetValue("git-mail"), DateTimeOffset.Now), options);
+                    Commands.Pull(repo, new Signature(Config.GetGitConfigValue("git-username"), Config.GetGitConfigValue("git-mail"), DateTimeOffset.Now), options);
                     Console.WriteLine("Pull successful.");
                 }
             }
