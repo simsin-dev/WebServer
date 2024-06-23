@@ -34,17 +34,8 @@ namespace WebServer.classes
                 if (valid) 
                 {   
                     Cookie cookie = cook.Value;
-                    
 
-                    string redirect = request.referer;
-                    if(!request.referer.EndsWith('/'))
-                    {
-                        redirect += "/";
-                    }
-
-                    redirect += "success.html";
-
-                    await stream.WriteAsync(Encoding.UTF8.GetBytes(header.StartResponse(303).AddContentType("text/plain").AddContentEncoding("gzip").AddCookie(cookie).AddRedirectTo(redirect).Build()));
+                    await stream.WriteAsync(Encoding.UTF8.GetBytes(header.StartResponse(303).AddContentType("text/plain").AddContentEncoding("gzip").AddCookie(cookie).Build()));
                     Console.WriteLine("logged in succesfully");
                 }
                 else 
