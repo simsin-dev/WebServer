@@ -22,17 +22,10 @@ namespace WebServer.classes
         bool ssl;
 
         X509Certificate2 certificate;
-        HttpResponseHeaderComposer headerComposer = new();
 
 
-        GETHandler GET;
-        POSTHandler POST;
-
-        public RequestHandler()
-        {
-            GET = new GETHandler(headerComposer);
-            POST = new POSTHandler(headerComposer);
-        }
+        GETHandler GET = new();
+        POSTHandler POST = new();
 
         public async Task Initialize()
         {

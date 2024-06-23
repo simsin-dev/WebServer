@@ -11,22 +11,15 @@ namespace WebServer.classes
 {
     public class GETHandler
     {
-        HttpResponseHeaderComposer header;
-
-        public GETHandler( HttpResponseHeaderComposer headerComposer)
-        {
-            this.header = headerComposer;
-        }
-
         public async Task HandleRequest(Stream stream, HttpRequest request)
         {
             var path = GetResourcePath(request.RequestedResource);
             var contentType = GetResourceType(path);
 
-
+            var header = new HttpResponseHeaderBuilder();
             if(!Config.ConfirmAccess(path, request)) 
             {
-                var headerBytes = Encoding.UTF8.GetBytes(header.GetHeader(200, contentType, "gzip"));
+                var headerBytes = Encoding.UTF8.GetBytes(header.StartResponse(401).AddContentType(contentType).AddContentEncoding("gzip").Build());
                 await stream.WriteAsync(headerBytes);
 
                 await GetResource(stream, Config.GetErrorPath(401));
@@ -36,14 +29,14 @@ namespace WebServer.classes
 
             if (File.Exists(path))
             {
-                var headerBytes = Encoding.UTF8.GetBytes(header.GetHeader(200, contentType, "gzip"));
+                var headerBytes = Encoding.UTF8.GetBytes(header.StartResponse(200).AddContentType(contentType).AddContentEncoding("gzip").Build());
                 await stream.WriteAsync(headerBytes);
 
                 await GetResource(stream, path);
             }
             else
             {
-                var headerBytes = Encoding.UTF8.GetBytes(header.GetHeader(404, contentType, "gzip"));
+                var headerBytes = Encoding.UTF8.GetBytes(header.StartResponse(404).AddContentType(contentType).AddContentEncoding("gzip").Build());
                 await stream.WriteAsync(headerBytes);
 
                 if(contentType == "text/html")

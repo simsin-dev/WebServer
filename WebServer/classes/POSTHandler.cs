@@ -1,4 +1,5 @@
 ﻿using LibGit2Sharp;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -17,85 +18,71 @@ namespace WebServer.classes
 {
     public class POSTHandler
     {
-        HttpResponseHeaderComposer header;
-
-        public POSTHandler(HttpResponseHeaderComposer header)
-        {
-            this.header = header;
-        }
-
         //on my server POST method is only used for login page
         //for more functionality switch request.referer
         [Obsolete]
         public async Task HandleRequest(Stream stream, HttpRequest request)
         {
-            Console.WriteLine(request.body);
-
-            NameValueCollection form = ParseMultipartFormData(request.body);
-
-            if(request.body.Contains("run-git-pls"))
+            if(request.RequestedResource.Contains("api/login"))
             {
-                if (Config.IsCookieValid(new Cookie("ADMINSESSION", request.RequestCookies["ADMINSESSION"])))
-                {
-                    GitHandler.RunGitPull();
-                }
+                LoginCredentials creds = JsonConvert.DeserializeObject<LoginCredentials>(request.body);
+                Console.WriteLine(creds.username+":"+creds.password);
 
+                bool valid = Config.AreCredentialsValid(creds.username, creds.password, out var cook); //passwdMan.AreCredentialsValid(form["username"], form["passwd"]);
+
+                var header = new HttpResponseHeaderBuilder();
+                if (valid) 
+                {   
+                    Cookie cookie = cook.Value;
+                    
+
+                    string redirect = request.referer;
+                    if(!request.referer.EndsWith('/'))
+                    {
+                        redirect += "/";
+                    }
+
+                    redirect += "success.html";
+
+                    await stream.WriteAsync(Encoding.UTF8.GetBytes(header.StartResponse(303).AddContentType("text/plain").AddContentEncoding("gzip").AddCookie(cookie).AddRedirectTo(redirect).Build()));
+                    Console.WriteLine("logged in succesfully");
+                }
+                else 
+                {
+                    Console.WriteLine("bad credentials");
+                    await stream.WriteAsync(Encoding.UTF8.GetBytes(header.StartResponse(401).AddContentType("text/plain").AddContentType("gzip").Build()));
+                }
+            }
+            else if(request.RequestedResource.Contains("api/git"))
+            {
+                if(request.body.Contains("run-git-pls"))
+                {
+                    if (Config.IsCookieValid(new Cookie("ADMINSESSION", request.RequestCookies["ADMINSESSION"])))
+                    {
+                        GitHandler.RunGitPull();
+                    }
+
+                    return;
+                }
+            }
+            else
+            {
+                Console.WriteLine("someone posted :3");
                 return;
-            }
-
-            bool valid = Config.AreCredentialsValid(form["username"], form["passwd"], out var cook); //passwdMan.AreCredentialsValid(form["username"], form["passwd"]);
-            Cookie cookie = cook.Value;
-
-            if (valid) 
-            {
-                Random rand = new();
-
-                //var name = "ADMINSESSION";
-                //var value = rand.Next() + ""; //also temporary
-
-                //.AddCookie(name,value, 2); // error
-                //Console.WriteLine("cookie added");
-
-                string redirect = request.referer;
-                if(!request.referer.EndsWith('/'))
-                {
-                    redirect += "/";
-                }
-
-                redirect += "success.html";
-
-                var headerBytes = Encoding.UTF8.GetBytes(header.GetHeader(303, "text/plain", "gzip", $"{cookie.Name}={cookie.Value}")); //temporary solution
-
-                await stream.WriteAsync(headerBytes);
-                Console.WriteLine(header.GetHeader(303, "text/plain", "gzip", $"{cookie.Name}={cookie.Value}", redirect));
-            }
-            else 
-            {
-                Console.WriteLine("bad credentials");
-                var headerBytes = Encoding.UTF8.GetBytes(header.GetHeader(401, "text/plain", "gzip"));
-                await stream.WriteAsync(headerBytes);
             }
         }
 
-        NameValueCollection ParseMultipartFormData(string formDataString)
+        struct LoginCredentials
         {
-            NameValueCollection formData = new NameValueCollection();
+            public string username;
+            public string password;
 
-            string[] parts = Regex.Split(formDataString, @"\r\n--");
-
-            foreach (string part in parts)
+            public LoginCredentials(string username, string password)
             {
-                Match match = Regex.Match(part, @"name=""(.*?)""[\r\n]*[\r\n]+(.+)[\r\n]*");
-
-                if (match.Success)
-                {
-                    string name = match.Groups[1].Value;
-                    string value = match.Groups[2].Value;
-
-                    formData.Add(name, value);
-                }
+                this.username = username;
+                this.password = password;
             }
-            return formData;
+
         }
     }
 }
