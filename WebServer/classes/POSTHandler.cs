@@ -18,9 +18,12 @@ namespace WebServer.classes
 {
     public class POSTHandler
     {
+        public POSTHandler()
+        {
+        }
+
         //on my server POST method is only used for login page
         //for more functionality switch request.referer
-        [Obsolete]
         public async Task HandleRequest(Stream stream, HttpRequest request)
         {
             if(request.RequestedResource.Contains("api/login"))

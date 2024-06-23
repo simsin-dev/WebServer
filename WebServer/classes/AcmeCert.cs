@@ -10,6 +10,7 @@ using System.Net;
 using Newtonsoft.Json.Linq;
 using Certes.Pkcs;
 using System.Security.Cryptography.X509Certificates;
+using System.Security.Principal;
 
 namespace WebServer.classes
 {
@@ -33,23 +34,59 @@ namespace WebServer.classes
 
             Console.WriteLine("Certificate expired or was not accesible, getting from acme");
 
-            var acme = new AcmeContext(WellKnownServers.LetsEncryptV2);
+            var context = new AcmeContext(WellKnownServers.LetsEncryptStagingV2);
 
-            var order = await acme.NewOrder(new[] { domain });
+            string pemKey;
+
+            if(!File.Exists(Config.GetConfigValue("acme-priv-key-path")))
+            {
+                Console.WriteLine(await context.TermsOfService());
+
+
+                var account = await context.NewAccount(Config.GetConfigValue("email"), true);
+
+                Console.WriteLine("created the account");
+                try
+                {
+                    pemKey = context.AccountKey.ToPem();
+
+                    File.WriteAllText(Config.GetConfigValue("acme-priv-key-path"), pemKey);
+                }
+                catch(Exception e)
+                {
+                    Console.WriteLine("change the acme-priv-key-path config value to a valid path !!!!!\n\n");
+                    throw e;
+                }
+            }
+            else
+            {
+                Console.WriteLine("reading priv key");
+                pemKey = File.ReadAllText(Config.GetConfigValue("acme-priv-key-path"));
+            }
+
+            var accountKey = KeyFactory.FromPem(pemKey);
+
+            Console.WriteLine("Getting acme context");
+            var acme = new AcmeContext(WellKnownServers.LetsEncryptStagingV2, accountKey);
+
+            Console.WriteLine("creating an order...");
+            var order = await acme.NewOrder(new[] { $"{domain}" });
 
             var orderLocation = order.Location;
             Console.WriteLine(orderLocation);
 
             var authz = (await order.Authorizations()).First();
+            Console.WriteLine("getting challange...");
             var httpChallange = await authz.Http();
             var keyAuthz = httpChallange.KeyAuthz;
             var ChallangeToken = httpChallange.Token;
 
-            await ListenForRequest(ChallangeToken, keyAuthz, httpChallange);
+            Console.WriteLine(ChallangeToken);
+
+            await ListenForRequest(domain,ChallangeToken, keyAuthz, httpChallange);
 
             var certKey = KeyFactory.NewKey(KeyAlgorithm.RS256);
-            CertificationRequestBuilder csr = new CertificationRequestBuilder();
-            csr.AddName("CN", domain);
+
             CertificateChain certChain = await order.Generate(new CsrInfo { CommonName = domain}, certKey);
 
             PfxBuilder pfxBuilder = certChain.ToPfx(certKey);
@@ -79,10 +116,11 @@ namespace WebServer.classes
             return new X509Certificate2(certBytes, certPassword, X509KeyStorageFlags.Exportable);
         }
 
-        async Task ListenForRequest(string token, string keyAuthz, IChallengeContext? challange)
+        async Task ListenForRequest(string domain, string token, string keyAuthz, IChallengeContext? challange)
         {
+            Console.WriteLine("listening for requests");
             HttpListener listener = new();
-            listener.Prefixes.Add($"http://*:80/.well-known/acme-challenge/{token}");
+            listener.Prefixes.Add($"http://*:80/");
             listener.Start();
 
             var task = Task.Run(() =>
@@ -91,7 +129,9 @@ namespace WebServer.classes
                 {
 
                     var context = listener.GetContext();
-                    if (context.Request.Url.AbsolutePath.EndsWith(token))
+                    Console.WriteLine(context.Request.Url.AbsolutePath);
+
+                    if (context.Request.Url.AbsolutePath.Contains($"well-known/acme-challenge/{token}"))
                     {
                         context.Response.StatusCode = 200;
 

@@ -15,10 +15,9 @@ namespace WebServer.classes
 {
     public class RequestHandler
     {
-        public string serverPath;
-        public string message404Path;
-        public string message403Path;
-
+        public RequestHandler()
+        {
+        }
         bool ssl;
 
         X509Certificate2 certificate;
@@ -30,13 +29,17 @@ namespace WebServer.classes
         public async Task Initialize()
         {
             ssl = Convert.ToBoolean(Config.GetConfigValue("ssl"));
+            Console.WriteLine("ssl: " + ssl);
 
             if (ssl)
             {
                 AcmeCert certGetter = new();
-
+                
+                Console.WriteLine("getting certification");
                 certificate = await certGetter.GetCert(Config.GetConfigValue("domain"), Config.GetGitConfigValue("certificate-passphrase"), Config.certificateExpirationDate);
             }
+
+            return;
         }
 
         public async Task HandleRequest(TcpClient client)

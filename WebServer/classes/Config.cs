@@ -19,7 +19,7 @@ namespace WebServer.classes
         static Dictionary<string,string> resstrictedAccesPaths = new();
 
         //cookies
-        static List<Cookie> Cookies;
+        static List<Cookie> Cookies = new();
         static Dictionary<Cookie, int> sessionCookies = new();
 
 
@@ -51,6 +51,11 @@ namespace WebServer.classes
                     certificateExpirationDate = DateTime.Now - TimeSpan.FromDays(6969);
                 }
 
+                //debug
+                foreach(var keypair in basicConfiguration)
+                {
+                    Console.WriteLine(keypair.Key +"  "+keypair.Value);
+                }
 
 
                 Console.WriteLine("Loaded config");
@@ -60,19 +65,21 @@ namespace WebServer.classes
                 CreateConfig(configPath);
                 throw new Exception("Config file created - quitting!!");
             }
-
-            CookieSweeper().Start();
+            
+            Task.Run(CookieSweeper);
         }
 
         static void ReadConfig(string configPath)
         {
-            using (StreamReader sr = new StreamReader(configPath)) 
+            string file = File.ReadAllText(configPath);
+
+            string[] lines = file.Split('\n');
+
+            int read = 0;
+
+            foreach(var line in lines)
             {
-                while (sr.EndOfStream)
-                {
-                    int read = 0;
-                    string line = sr.ReadLine();
-                    if (line.StartsWith('#'))
+                if (line.StartsWith('#'))
                     {
                         continue;
                     }
@@ -82,41 +89,48 @@ namespace WebServer.classes
                     }
                     else
                     {
-                        string[] split;
-                        switch (read)
+                        try
                         {
-                            case 0:
-                                split = line.Split("::");
-                                basicConfiguration.Add(split[0], split[1]);
-                                break;
-                            case 1:
-                                split = line.Split("::");
-                                gitConfiguration.Add(split[0], split[1]);
-                                break;
-                            case 2:
-                                split = line.Split("::");
-                                errorPaths.Add(Convert.ToInt32(split[0]), split[1]);
-                                break;
-                            case 3:
-                                split = line.Split("::");
-                                credentials.Add(split[0], (split[1],new Cookie(split[2], split[3])));
-                                if (!split[3].Contains("RANDOM"))
-                                {
-                                    Cookies.Add(new Cookie(split[2], split[3]));
-                                }
-                                break;
-                            case 4:
-                                split = line.Split("::");
-                                resstrictedAccesPaths.Add(split[0], split[1]);
-                                break;
+                            string[] split;
+                            switch (read)
+                            {
+                                case 0:
+                                    split = line.Split("::");
+                                    basicConfiguration.Add(split[0], split[1]);
+                                    break;
+                                case 1:
+                                    split = line.Split("::");
+                                    gitConfiguration.Add(split[0], split[1]);
+                                    break;
+                                case 2:
+                                    split = line.Split("::");
+                                    errorPaths.Add(Convert.ToInt32(split[0]), split[1]);
+                                    break;
+                                case 3:
+                                    split = line.Split("::");
+                                    credentials.Add(split[0], (split[1],new Cookie(split[2], split[3])));
+                                    if (!split[3].Contains("RANDOM"))
+                                    {
+                                        Cookies.Add(new Cookie(split[2], split[3]));
+                                    }
+                                    break;
+                                case 4:
+                                    split = line.Split("::");
+                                    resstrictedAccesPaths.Add(split[0], split[1]);
+                                    break;
+                            }
+                        }
+                        catch(Exception e)
+                        {
+                            Console.WriteLine(e.Message);
                         }
                     }
-                }
             }
         }
 
         
 
+//TODO: FIX CONFIG INFO
         static void CreateConfig(string configPath)
         {
             //populate basic config
@@ -128,6 +142,8 @@ namespace WebServer.classes
             basicConfiguration.Add("domain", "");
             basicConfiguration.Add("certificate-passphrase", "");
             basicConfiguration.Add("session-lifetime", "5");
+            basicConfiguration.Add("acme-priv-key-path","");
+            basicConfiguration.Add("email","");
 
             gitConfiguration.Add("git-repo-dir", "");
             gitConfiguration.Add("git-username", "");
@@ -172,8 +188,8 @@ namespace WebServer.classes
                 writer.WriteLine("# Credential's for login pages");
                 writer.WriteLine("# Succesful login sends over a cookie required to acces pages");
                 writer.WriteLine("# Adding a 'RANDOM' keyword, makes the cookie session based and changes the keywaord to a random int");
-                writer.WriteLine("# Format - [username]::[password]::[cookie]");
-                writer.WriteLine("admin::admin::adminRANDOM");
+                writer.WriteLine("# Format - [username]::[password]::[cookie-name]::[cookie-value]");
+                writer.WriteLine("admin::admin::admin::adminRANDOM");
 
                 writer.WriteLine("---restricted-paths---");
                 writer.WriteLine("# Paths restricted by cookies");
@@ -185,13 +201,13 @@ namespace WebServer.classes
 
 
 
-        public static string? GetConfigValue(string key)
+        public static string GetConfigValue(string key)
         {
             return basicConfiguration.GetValueOrDefault(key);
         }
 
 
-        public static string? GetGitConfigValue(string key)
+        public static string GetGitConfigValue(string key)
         {
             return gitConfiguration.GetValueOrDefault(key);
         }
@@ -285,7 +301,7 @@ namespace WebServer.classes
             return sessionCookie;
         }
 
-        static Task CookieSweeper()
+        static void CookieSweeper()
         {
             while (true)
             {

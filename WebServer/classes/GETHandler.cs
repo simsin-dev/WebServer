@@ -11,6 +11,10 @@ namespace WebServer.classes
 {
     public class GETHandler
     {
+        public GETHandler()
+        {
+        }
+
         public async Task HandleRequest(Stream stream, HttpRequest request)
         {
             var path = GetResourcePath(request.RequestedResource);

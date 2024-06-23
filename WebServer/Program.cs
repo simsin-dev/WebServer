@@ -18,7 +18,11 @@ class Program
         RequestHandler handler = new();
         await handler.Initialize();
 
+        Console.WriteLine("request handler initialized");
+
         TcpListener listener = new TcpListener(IPAddress.Parse(Config.GetConfigValue("ip-to-listen-on")), Convert.ToInt32(Config.GetConfigValue("port")));
+
+        Console.WriteLine("Starting listener");
         listener.Start();
 
         Console.WriteLine("Listening...");
