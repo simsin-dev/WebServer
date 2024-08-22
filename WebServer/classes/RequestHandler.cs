@@ -15,13 +15,9 @@ namespace WebServer.classes
 {
     public class RequestHandler
     {
-        public RequestHandler()
-        {
-        }
         bool ssl;
 
         X509Certificate2 certificate;
-
 
         GETHandler GET = new();
         POSTHandler POST = new();
@@ -38,8 +34,7 @@ namespace WebServer.classes
                 Console.WriteLine("getting certification");
                 certificate = await certGetter.GetCert(Config.GetConfigValue("domain"), Config.GetGitConfigValue("certificate-passphrase"), Config.certificateExpirationDate);
             }
-
-            return;
+            Console.WriteLine("done");
         }
 
         public async Task HandleRequest(TcpClient client)

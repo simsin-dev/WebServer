@@ -18,6 +18,9 @@ namespace WebServer.classes
     {
         public async Task<X509Certificate2> GetCert(string domain, string certPassword, DateTime Expires)
         {
+            Console.WriteLine("reading cert from a file");
+            return ReadCert(certPassword);
+
             if(Expires > DateTime.Now) 
             {
                 Console.WriteLine("reading cert from a file");
@@ -121,7 +124,7 @@ namespace WebServer.classes
                 throw new FileLoadException();
             }
 
-            return new X509Certificate2(certBytes, certPassword, X509KeyStorageFlags.Exportable);
+            return new X509Certificate2(certBytes, certPassword, X509KeyStorageFlags.Exportable | X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.MachineKeySet);
         }
 
 /*         async Task ListenForRequest(string domain, string token, string keyAuthz, IChallengeContext? challange)

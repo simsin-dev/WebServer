@@ -301,11 +301,11 @@ namespace WebServer.classes
             return sessionCookie;
         }
 
-        static void CookieSweeper()
+        static async Task CookieSweeper()
         {
             while (true)
             {
-                Task.Delay(60000);
+                await Task.Delay(60000);
 
                 foreach (var key in sessionCookies.Keys)
                 {
@@ -316,6 +316,8 @@ namespace WebServer.classes
                         sessionCookies.Remove(key);
                     }
                 }
+
+                Console.WriteLine("here");
             }
         }
 
