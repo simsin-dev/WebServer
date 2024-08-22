@@ -19,9 +19,13 @@ namespace WebServer.classes
         {
             var path = GetResourcePath(request.RequestedResource);
             var contentType = GetResourceType(path);
+            if (path.Contains(".."))
+            {
+                return; //drop the request if someone tries LFI
+            }
 
             var header = new HttpResponseHeaderBuilder();
-            if(!Config.ConfirmAccess(path, request)) 
+            if (!Config.ConfirmAccess(path, request))
             {
                 var headerBytes = Encoding.UTF8.GetBytes(header.StartResponse(401).AddContentType(contentType).AddContentEncoding("gzip").Build());
                 await stream.WriteAsync(headerBytes);
@@ -43,7 +47,7 @@ namespace WebServer.classes
                 var headerBytes = Encoding.UTF8.GetBytes(header.StartResponse(404).AddContentType(contentType).AddContentEncoding("gzip").Build());
                 await stream.WriteAsync(headerBytes);
 
-                if(contentType == "text/html")
+                if (contentType == "text/html")
                 {
                     await GetResource(stream, Config.GetErrorPath(404));
                 }

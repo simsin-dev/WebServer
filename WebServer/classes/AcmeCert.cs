@@ -32,7 +32,9 @@ namespace WebServer.classes
                 }
             }
 
-            Console.WriteLine("Certificate expired or was not accesible, getting from acme");
+            //Code below is commented out bc of my current inability to debug it
+
+           /*  Console.WriteLine("Certificate expired or was not accesible, getting from acme");
 
             var context = new AcmeContext(WellKnownServers.LetsEncryptStagingV2);
 
@@ -101,14 +103,14 @@ namespace WebServer.classes
             var cert = new X509Certificate2(pfx, certPassword, X509KeyStorageFlags.Exportable);
 
             SaveCert(cert, certPassword);
-
-            return cert;
+            */
+            return null;
         }
 
-        private void SaveCert(X509Certificate2 cert, string certPassword)
+/*         private void SaveCert(X509Certificate2 cert, string certPassword)
         {
             File.WriteAllBytes(Path.Combine(Directory.GetCurrentDirectory(),"cert.pfx"), cert.Export(X509ContentType.Pkcs12, certPassword));
-        }
+        } */
 
         private X509Certificate2 ReadCert(string certPassword)
         {
@@ -122,7 +124,7 @@ namespace WebServer.classes
             return new X509Certificate2(certBytes, certPassword, X509KeyStorageFlags.Exportable);
         }
 
-        async Task ListenForRequest(string domain, string token, string keyAuthz, IChallengeContext? challange)
+/*         async Task ListenForRequest(string domain, string token, string keyAuthz, IChallengeContext? challange)
         {
             Console.WriteLine("listening for requests");
             HttpListener listener = new();
@@ -165,7 +167,7 @@ namespace WebServer.classes
             task.Wait();
 
             listener.Stop();
-        }
+        } */
 
 
     }
