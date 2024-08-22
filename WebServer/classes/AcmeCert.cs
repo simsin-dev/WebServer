@@ -63,11 +63,15 @@ namespace WebServer.classes
                 Console.WriteLine("reading priv key");
                 pemKey = File.ReadAllText(Config.GetConfigValue("acme-priv-key-path"));
             }
-
             var accountKey = KeyFactory.FromPem(pemKey);
+            context = null;
 
             Console.WriteLine("Getting acme context");
             var acme = new AcmeContext(WellKnownServers.LetsEncryptStagingV2, accountKey);
+            accountKey = null;
+            pemKey = null;
+            
+            GC.Collect();
 
             Console.WriteLine("creating an order...");
             var order = await acme.NewOrder(new[] { $"{domain}" });
@@ -76,7 +80,9 @@ namespace WebServer.classes
             Console.WriteLine(orderLocation);
 
             var authz = (await order.Authorizations()).First();
+
             Console.WriteLine("getting challange...");
+
             var httpChallange = await authz.Http();
             var keyAuthz = httpChallange.KeyAuthz;
             var ChallangeToken = httpChallange.Token;
