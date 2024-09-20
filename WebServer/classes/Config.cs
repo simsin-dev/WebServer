@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using WebServer.http;
 
+//TODO: FIX THIS MESS PLS
 namespace WebServer.classes
 {
     public static class Config
@@ -144,6 +145,7 @@ namespace WebServer.classes
             basicConfiguration.Add("session-lifetime", "5");
             basicConfiguration.Add("acme-priv-key-path","");
             basicConfiguration.Add("email","");
+            basicConfiguration.Add("MaxCacheSize", "209715200");
 
             gitConfiguration.Add("git-repo-dir", "");
             gitConfiguration.Add("git-username", "");
@@ -317,7 +319,7 @@ namespace WebServer.classes
                     }
                 }
 
-                Console.WriteLine("here");
+                //Console.WriteLine("here");
             }
         }
 

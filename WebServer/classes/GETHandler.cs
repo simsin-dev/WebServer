@@ -57,11 +57,15 @@ namespace WebServer.classes
 
         public async Task GetResource(Stream output, string path)
         {
-            using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read))
+            var gotCached = MyCache.GetFromCache(path, output);
+            if (!gotCached)
             {
-                using (GZipStream gzip = new GZipStream(output, CompressionLevel.Optimal))
+                using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read))
                 {
-                    await fs.CopyToAsync(gzip).ConfigureAwait(false);
+                    using (GZipStream gzip = new GZipStream(output, CompressionLevel.Optimal))
+                    {
+                        await fs.CopyToAsync(gzip).ConfigureAwait(false);
+                    }
                 }
             }
         }

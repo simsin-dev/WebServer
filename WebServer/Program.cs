@@ -14,6 +14,8 @@ class Program
     public static async Task Main(string[] args)
     {
         Console.WriteLine("Starting server!!");
+        
+        MyCache.Initialize();
 
         RequestHandler handler = new();
         await handler.Initialize();
