@@ -146,6 +146,7 @@ namespace WebServer.classes
             basicConfiguration.Add("acme-priv-key-path","");
             basicConfiguration.Add("email","");
             basicConfiguration.Add("MaxCacheSize", "209715200");
+            basicConfiguration.Add("MaxBytesSentPerMinute", "0");
 
             gitConfiguration.Add("git-repo-dir", "");
             gitConfiguration.Add("git-username", "");

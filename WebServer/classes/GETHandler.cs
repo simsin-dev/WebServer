@@ -17,6 +17,13 @@ namespace WebServer.classes
 
         public async Task HandleRequest(Stream stream, HttpRequest request)
         {
+            if(!NetworkLimiter.CanRespond)
+            {
+                Console.WriteLine("Dropped bc of network limiter.");
+                return;
+            }
+
+
             var path = GetResourcePath(request.RequestedResource);
             var contentType = GetResourceType(path);
             if (path.Contains(".."))
@@ -28,6 +35,9 @@ namespace WebServer.classes
             if (!Config.ConfirmAccess(path, request))
             {
                 var headerBytes = Encoding.UTF8.GetBytes(header.StartResponse(401).AddContentType(contentType).AddContentEncoding("gzip").Build());
+
+                NetworkLimiter.AddBytes(headerBytes.Length);
+
                 await stream.WriteAsync(headerBytes);
 
                 await GetResource(stream, Config.GetErrorPath(401));
@@ -38,6 +48,7 @@ namespace WebServer.classes
             if (File.Exists(path))
             {
                 var headerBytes = Encoding.UTF8.GetBytes(header.StartResponse(200).AddContentType(contentType).AddContentEncoding("gzip").Build());
+                NetworkLimiter.AddBytes(headerBytes.Length);
                 await stream.WriteAsync(headerBytes);
 
                 await GetResource(stream, path);
@@ -45,6 +56,7 @@ namespace WebServer.classes
             else
             {
                 var headerBytes = Encoding.UTF8.GetBytes(header.StartResponse(404).AddContentType(contentType).AddContentEncoding("gzip").Build());
+                NetworkLimiter.AddBytes(headerBytes.Length);
                 await stream.WriteAsync(headerBytes);
 
                 if (contentType == "text/html")

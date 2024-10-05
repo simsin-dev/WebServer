@@ -29,6 +29,9 @@ public static class MyCache
                 //Console.WriteLine("Taking from cache");
 
                 stream.Write(cachedItems[i].item);
+
+                NetworkLimiter.AddBytes(cachedItems[i].item.Length);
+                
                 return true;
             }
         }
